@@ -26,10 +26,14 @@ pub struct Rendition {
 }
 
 impl Rendition {
-    /// Peak bandwidth advertised to players in the master playlist (bits/sec):
-    /// video cap + audio, which is what a client must sustain for this rung.
+    /// Peak bandwidth advertised to players in the master playlist (bits/sec).
+    ///
+    /// RFC 8216 §4.3.4.2 wants the *peak segment* bitrate, which is more than
+    /// the elementary-stream rates: MPEG-TS packetization adds roughly 10–15%
+    /// overhead at these bitrates. Advertise video cap + audio + 15% so players
+    /// don't switch up to a rung they can't actually sustain.
     pub fn bandwidth_bps(&self) -> u32 {
-        (self.maxrate_kbps + self.a_kbps) * 1000
+        (self.maxrate_kbps + self.a_kbps) * 1000 * 115 / 100
     }
 }
 
@@ -65,18 +69,20 @@ pub fn plan(info: &MediaInfo) -> Vec<Rendition> {
         .collect()
 }
 
-/// Width that preserves the source aspect ratio at `height`, rounded to the
-/// nearest even number — matching how ffmpeg's `scale=-2:H` picks the width, so
-/// the master playlist's `RESOLUTION` tag equals the actual encoded size. Falls
-/// back to 16:9 when the source dimensions are unknown.
+/// Width that preserves the source aspect ratio at `height`, computed exactly
+/// the way ffmpeg's `scale=-2:H` does (round to nearest integer, then align
+/// *up* to even — FFALIGN), so the master playlist's `RESOLUTION` tag equals
+/// the actual encoded size. Falls back to 16:9 when the source dimensions are
+/// unknown.
 fn width_for(info: &MediaInfo, height: u32) -> u32 {
     let raw = if info.height > 0 {
         height as f64 * info.width as f64 / info.height as f64
     } else {
         height as f64 * 16.0 / 9.0
     };
-    // Round to the nearest multiple of two (ffmpeg's `-2` behavior).
-    (((raw / 2.0).round() * 2.0) as u32).max(2)
+    let rounded = raw.round() as u32;
+    // FFALIGN(x, 2): round up to the next even number.
+    ((rounded + 1) & !1).max(2)
 }
 
 #[cfg(test)]
@@ -106,6 +112,23 @@ mod tests {
         let ladder = plan(&source(160, 120));
         assert_eq!(ladder.len(), 1);
         assert_eq!(ladder[0].name, "240p");
+    }
+
+    #[test]
+    fn width_matches_ffmpeg_ffalign_rounding() {
+        // 1279×720 source at the 480p rung: 852.67 → round 853 → align UP 854,
+        // which is what ffmpeg's `scale=-2:480` actually encodes.
+        let ladder = plan(&source(1279, 720));
+        let r480 = ladder.iter().find(|r| r.name == "480p").unwrap();
+        assert_eq!(r480.width, 854);
+    }
+
+    #[test]
+    fn bandwidth_includes_container_overhead() {
+        let ladder = plan(&source(1920, 1080));
+        let r720 = ladder.iter().find(|r| r.name == "720p").unwrap();
+        // (2996 maxrate + 128 audio) kbps + 15% TS overhead.
+        assert_eq!(r720.bandwidth_bps(), (2996 + 128) * 1000 * 115 / 100);
     }
 
     #[test]

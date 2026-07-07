@@ -49,7 +49,9 @@
   </div>
   <div class="foot">Serving <code>{{MASTER}}</code> · adaptive bitrate over HLS</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+  <!-- hls.js (Apache-2.0) is vendored into the streamsmith binary and served
+       locally — the preview works offline, nothing is loaded from a CDN. -->
+  <script src="hls.js"></script>
   <script>
     const SRC = "{{MASTER}}";
     const video = document.getElementById("v");

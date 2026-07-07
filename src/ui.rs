@@ -11,8 +11,21 @@ use crate::media::MediaInfo;
 
 fn color_enabled() -> bool {
     static ENABLED: OnceLock<bool> = OnceLock::new();
-    // Respect NO_COLOR (https://no-color.org/); otherwise default to on.
-    *ENABLED.get_or_init(|| std::env::var_os("NO_COLOR").is_none())
+    *ENABLED.get_or_init(|| {
+        // Respect NO_COLOR (https://no-color.org/) everywhere.
+        if std::env::var_os("NO_COLOR").is_some() {
+            return false;
+        }
+        // Legacy Windows consoles (cmd.exe / PowerShell 5 conhost) don't
+        // enable ANSI processing by default and would print escape garbage.
+        // Only color when a modern terminal identifies itself.
+        if cfg!(windows) {
+            return ["WT_SESSION", "TERM", "TERM_PROGRAM", "ANSICON"]
+                .iter()
+                .any(|v| std::env::var_os(v).is_some());
+        }
+        true
+    })
 }
 
 fn paint(code: &str, text: &str) -> String {
@@ -26,6 +39,9 @@ fn paint(code: &str, text: &str) -> String {
 fn bold(t: &str) -> String {
     paint("1", t)
 }
+fn red(t: &str) -> String {
+    paint("31", t)
+}
 fn dim(t: &str) -> String {
     paint("2", t)
 }
@@ -34,6 +50,11 @@ fn green(t: &str) -> String {
 }
 fn cyan(t: &str) -> String {
     paint("36", t)
+}
+
+/// A fatal error, printed to stderr (color rules apply here too).
+pub fn error(msg: impl std::fmt::Display) {
+    eprintln!("{} {msg}", red("error:"));
 }
 
 /// One-line product banner.

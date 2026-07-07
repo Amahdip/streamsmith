@@ -16,6 +16,10 @@ use crate::ui;
 /// The player page, baked into the binary at compile time.
 const PLAYER_HTML: &str = include_str!("../assets/player.html");
 
+/// hls.js (Apache-2.0), vendored and served locally — the preview works fully
+/// offline and loads nothing from a CDN.
+const HLS_JS: &str = include_str!("../assets/hls.min.js");
+
 /// Serve `dir` on `127.0.0.1:port` until interrupted. Optionally opens a browser.
 pub fn run(dir: &str, port: u16, open_browser: bool) -> Result<()> {
     let addr = format!("127.0.0.1:{port}");
@@ -48,6 +52,14 @@ fn build_response(root: &Path, raw_url: &str) -> Response<std::io::Cursor<Vec<u8
         // Inject the master-playlist filename so the player knows what to load.
         let html = PLAYER_HTML.replace("{{MASTER}}", MASTER_PLAYLIST);
         return html_response(html);
+    }
+
+    // The vendored player library, served from the binary itself.
+    if path_part == "/hls.js" {
+        return Response::from_data(HLS_JS.as_bytes().to_vec()).with_header(header(
+            "Content-Type",
+            "application/javascript; charset=utf-8",
+        ));
     }
 
     match resolve(root, path_part) {
@@ -102,11 +114,11 @@ fn html_response(html: String) -> Response<std::io::Cursor<Vec<u8>>> {
         .with_header(header("Content-Type", "text/html; charset=utf-8"))
 }
 
+// Note: no CORS headers on purpose. The player is same-origin, and a wildcard
+// Access-Control-Allow-Origin would let any website the user visits while
+// previewing read the stream off 127.0.0.1.
 fn file_response(path: &Path, bytes: Vec<u8>) -> Response<std::io::Cursor<Vec<u8>>> {
-    Response::from_data(bytes)
-        .with_header(header("Content-Type", content_type(path)))
-        // Allow the player to fetch segments without cross-origin fuss.
-        .with_header(header("Access-Control-Allow-Origin", "*"))
+    Response::from_data(bytes).with_header(header("Content-Type", content_type(path)))
 }
 
 fn not_found() -> Response<std::io::Cursor<Vec<u8>>> {

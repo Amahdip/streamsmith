@@ -11,7 +11,9 @@ homepage = "https://github.com/Amahdip/streamsmith"
 readme = "README.md"
 keywords = ["hls", "ffmpeg", "video", "streaming", "transcoding"]
 categories = ["command-line-utilities", "multimedia::video"]
-exclude = ["assets/*.gif", "/.github"]
+# Keep the crates.io tarball lean: demo media and CI config stay in the git
+# repo only. assets/player.html must ship — it's include_str!'d at compile time.
+exclude = ["/docs", "/demo.tape", "/.github"]
 
 [[bin]]
 name = "streamsmith"

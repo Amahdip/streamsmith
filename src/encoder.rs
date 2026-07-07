@@ -177,8 +177,16 @@ pub fn resolve(ffmpeg_bin: &str, requested: HwAccel) -> Result<Encoder> {
             Encoder::nvenc()
         } else if has("h264_qsv") {
             Encoder::qsv()
-        } else {
+        } else if has("libx264") {
             Encoder::x264()
+        } else {
+            // e.g. an LGPL ffmpeg build (Fedora's ffmpeg-free) has none of
+            // these. Fail once with the cause instead of N per-rung errors.
+            bail!(
+                "no usable H.264 encoder in this ffmpeg build: no hardware \
+                 encoder found and libx264 is missing (a GPL ffmpeg build is \
+                 required for software encoding)"
+            )
         }),
     }
 }

@@ -33,7 +33,7 @@ struct Cli {
     out: String,
 
     /// HLS segment length, in seconds.
-    #[arg(long, default_value_t = 6)]
+    #[arg(long, default_value_t = 6, value_parser = clap::value_parser!(u32).range(1..=60))]
     segment: u32,
 
     /// x264 preset (ultrafast … placebo): faster encodes trade off file size.
@@ -78,7 +78,7 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             // `{:#}` prints the whole anyhow context chain on one tidy line.
-            eprintln!("\x1b[31merror:\x1b[0m {e:#}");
+            ui::error(format_args!("{e:#}"));
             ExitCode::FAILURE
         }
     }
@@ -87,9 +87,12 @@ fn main() -> ExitCode {
 fn run(cli: Cli) -> Result<()> {
     ui::banner();
 
-    // Guard a local path that begins with `-` from being parsed as an
-    // ffmpeg/ffprobe option (URLs, containing "://", are left untouched).
+    // Guard local paths that begin with `-` from being parsed as
+    // ffmpeg/ffprobe options (URLs, containing "://", are left untouched).
+    // The output directory feeds ffmpeg's positional output argument, so it
+    // needs the same escape as the input.
     let input = normalize_input(&cli.input);
+    let out = normalize_input(&cli.out);
 
     // 1. Probe the source.
     let info = probe::probe(&cli.ffprobe, &input)?;
@@ -119,20 +122,20 @@ fn run(cli: Cli) -> Result<()> {
     let opts = PackageOptions {
         ffmpeg_bin: &cli.ffmpeg,
         input: &input,
-        out_dir: &cli.out,
+        out_dir: &out,
         segment_secs: cli.segment,
         preset: &cli.preset,
         encoder: &encoder,
         threads_per_job,
     };
     package::hls(&opts, &info, &ladder, jobs)?;
-    ui::step_done(&cli.out, MASTER_PLAYLIST);
+    ui::step_done(&out, MASTER_PLAYLIST);
 
     // 4. Serve a live preview.
     if cli.no_serve {
         return Ok(());
     }
-    serve::run(&cli.out, cli.port, !cli.no_open)
+    serve::run(&out, cli.port, !cli.no_open)
 }
 
 /// Prefix `./` to a local path that begins with `-`, so ffmpeg/ffprobe don't
