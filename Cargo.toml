@@ -11,9 +11,9 @@ homepage = "https://github.com/Amahdip/streamsmith"
 readme = "README.md"
 keywords = ["hls", "ffmpeg", "video", "streaming", "transcoding"]
 categories = ["command-line-utilities", "multimedia::video"]
-# Keep the crates.io tarball lean: demo media and CI config stay in the git
-# repo only. assets/player.html must ship — it's include_str!'d at compile time.
-exclude = ["/docs", "/demo.tape", "/.github"]
+# Keep the crates.io tarball lean: demo media, CI config, and release docs stay
+# in the git repo only. assets/player.html must ship — it's include_str!'d.
+exclude = ["/docs", "/demo.tape", "/.github", "/RELEASING.md"]
 
 [[bin]]
 name = "streamsmith"
@@ -26,6 +26,17 @@ serde_json = "1"
 anyhow = "1"
 tiny_http = "0.12"   # tiny, sync, dependency-light preview server
 open = "5"           # launch the default browser at the preview URL
+
+# Release automation (cargo-release): `cargo release patch -x` bumps the
+# version, commits, tags `vX.Y.Z`, publishes to crates.io, and pushes — all
+# atomically, so the version, tag, and crate can never drift apart.
+[package.metadata.release]
+tag-name = "v{{version}}"
+pre-release-commit-message = "chore: release {{version}}"
+tag-message = "streamsmith {{version}}"
+# Fail early if the working tree isn't clean / not on an allowed branch.
+allow-branch = ["main"]
+sign-tag = false
 
 # A single-binary CLI wants a small, fast-launching artifact. Optimize the
 # release build for size and speed without hurting startup.
