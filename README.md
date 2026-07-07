@@ -8,12 +8,9 @@
 [![CI](https://github.com/Amahdip/streamsmith/actions/workflows/ci.yml/badge.svg)](https://github.com/Amahdip/streamsmith/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](#license)
 
-<!--
-  Hero image. The static SVG below renders instantly on GitHub.
-  For an animated version, run `vhs demo.tape` (see demo.tape) to produce
-  docs/demo.gif, then change the line below to: ![streamsmith](docs/demo.gif)
--->
-![streamsmith](docs/hero.svg)
+<!-- Animated hero. Re-record any time with `vhs demo.tape` (or the asciinema
+     + agg path). A static fallback lives at docs/hero.svg. -->
+![streamsmith](docs/demo.gif)
 
 </div>
 
