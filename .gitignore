@@ -1,0 +1,9 @@
+/target
+**/*.rs.bk
+
+# streamsmith's default output directory + common ad-hoc names
+/stream
+/dist
+
+# throwaway sample clips used while testing
+/sample.mp4

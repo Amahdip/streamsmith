@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>streamsmith · preview</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 1.25rem; padding: 2rem;
+      background: radial-gradient(1200px 600px at 50% -10%, #1b2735 0%, #0b0f14 60%);
+      color: #e6edf3;
+      font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .brand { font-weight: 700; letter-spacing: .2px; }
+    .brand span { color: #58a6ff; }
+    .wrap {
+      width: min(960px, 100%);
+      background: #0d1117; border: 1px solid #21262d; border-radius: 14px;
+      overflow: hidden; box-shadow: 0 24px 60px -20px rgba(0,0,0,.7);
+    }
+    video { display: block; width: 100%; aspect-ratio: 16/9; background: #000; }
+    .bar {
+      display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+      padding: .75rem 1rem; border-top: 1px solid #21262d; font-size: 13px;
+    }
+    .bar label { color: #8b949e; }
+    select {
+      background: #161b22; color: #e6edf3; border: 1px solid #30363d;
+      border-radius: 8px; padding: .35rem .6rem; font: inherit;
+    }
+    .pill { margin-left: auto; color: #3fb950; font-variant-numeric: tabular-nums; }
+    .foot { color: #8b949e; font-size: 12px; }
+    a { color: #58a6ff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="brand">stream<span>smith</span></div>
+  <div class="wrap">
+    <video id="v" controls autoplay muted playsinline></video>
+    <div class="bar">
+      <label for="q">Quality</label>
+      <select id="q"><option value="-1">Auto</option></select>
+      <span class="pill" id="now">—</span>
+    </div>
+  </div>
+  <div class="foot">Serving <code>{{MASTER}}</code> · adaptive bitrate over HLS</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+  <script>
+    const SRC = "{{MASTER}}";
+    const video = document.getElementById("v");
+    const picker = document.getElementById("q");
+    const now = document.getElementById("now");
+
+    function label(level) {
+      const h = level.height || Math.round((level.bitrate || 0) / 1000);
+      return level.height ? level.height + "p" : h + " kb/s";
+    }
+
+    if (window.Hls && Hls.isSupported()) {
+      const hls = new Hls({ startLevel: -1 });
+      hls.loadSource(SRC);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
+        data.levels.forEach((lvl, i) => {
+          const o = document.createElement("option");
+          o.value = i; o.textContent = label(lvl);
+          picker.appendChild(o);
+        });
+      });
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => {
+        const lvl = hls.levels[data.level];
+        now.textContent = (picker.value === "-1" ? "auto · " : "") + label(lvl);
+      });
+      picker.addEventListener("change", () => { hls.currentLevel = parseInt(picker.value, 10); });
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Safari plays HLS natively; it manages quality itself.
+      video.src = SRC;
+      now.textContent = "native HLS";
+      picker.disabled = true;
+    } else {
+      now.textContent = "HLS unsupported in this browser";
+    }
+  </script>
+</body>
+</html>
