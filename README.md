@@ -8,14 +8,12 @@
 [![CI](https://github.com/yourname/streamsmith/actions/workflows/ci.yml/badge.svg)](https://github.com/yourname/streamsmith/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](#license)
 
-```console
-$ streamsmith talk.mp4
-```
-
-<!-- TODO: record a terminal GIF here — it is the single biggest driver of stars.
-     `asciinema rec`, or vhs (https://github.com/charmbracelet/vhs). Drop it at
-     docs/demo.gif and reference it below. -->
-<!-- ![demo](docs/demo.gif) -->
+<!--
+  Hero image. The static SVG below renders instantly on GitHub.
+  For an animated version, run `vhs demo.tape` (see demo.tape) to produce
+  docs/demo.gif, then change the line below to: ![streamsmith](docs/demo.gif)
+-->
+![streamsmith](docs/hero.svg)
 
 </div>
 

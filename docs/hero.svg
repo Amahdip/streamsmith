@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="512" viewBox="0 0 1160 512" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="19">
+  <style>
+    .b { font-weight: 700; fill: #e6edf3; }
+    .dim { fill: #8b949e; }
+    .ok { fill: #3fb950; font-weight: 700; }
+    .cy { fill: #58a6ff; }
+    .w  { fill: #e6edf3; }
+    text { white-space: pre; }
+  </style>
+
+  <!-- window -->
+  <rect x="0" y="0" width="1160" height="512" rx="14" fill="#0d1117"/>
+  <rect x="0" y="0" width="1160" height="46" rx="14" fill="#161b22"/>
+  <rect x="0" y="30" width="1160" height="16" fill="#161b22"/>
+  <circle cx="28" cy="23" r="7" fill="#ff5f56"/>
+  <circle cx="52" cy="23" r="7" fill="#ffbd2e"/>
+  <circle cx="76" cy="23" r="7" fill="#27c93f"/>
+  <text x="580" y="29" text-anchor="middle" class="dim" font-size="15">streamsmith</text>
+
+  <!-- body -->
+  <text x="32" y="92"><tspan class="dim">$ </tspan><tspan class="w">streamsmith talk.mp4</tspan></text>
+
+  <text x="32" y="128"><tspan class="b">streamsmith</tspan><tspan class="dim"> · one command → a web-ready adaptive stream</tspan></text>
+
+  <text x="32" y="160"><tspan class="ok">✓ </tspan><tspan class="b">probed  </tspan><tspan class="dim">1920×1080 · h264 · 30 fps · 0:06</tspan></text>
+  <text x="32" y="192"><tspan class="ok">✓ </tspan><tspan class="b">ladder  </tspan><tspan class="cy">240p  360p  480p  720p  1080p</tspan></text>
+
+  <text x="32" y="224"><tspan class="ok">✓   </tspan><tspan class="b">240p   </tspan><tspan class="dim">426×240 · 400 kb/s · 1.1s</tspan></text>
+  <text x="32" y="256"><tspan class="ok">✓   </tspan><tspan class="b">360p   </tspan><tspan class="dim">640×360 · 800 kb/s · 1.2s</tspan></text>
+  <text x="32" y="288"><tspan class="ok">✓   </tspan><tspan class="b">480p   </tspan><tspan class="dim">854×480 · 1400 kb/s · 1.3s</tspan></text>
+  <text x="32" y="320"><tspan class="ok">✓   </tspan><tspan class="b">720p   </tspan><tspan class="dim">1280×720 · 2800 kb/s · 1.6s</tspan></text>
+  <text x="32" y="352"><tspan class="ok">✓   </tspan><tspan class="b">1080p  </tspan><tspan class="dim">1920×1080 · 5000 kb/s · 2.2s</tspan></text>
+
+  <text x="32" y="384"><tspan class="ok">✓ </tspan><tspan class="b">packaged  </tspan><tspan class="dim">stream/  (play master.m3u8)</tspan></text>
+
+  <text x="32" y="430"><tspan class="b">  ▶ preview  </tspan><tspan class="cy">http://127.0.0.1:8080/</tspan></text>
+  <text x="32" y="458"><tspan class="dim">  press Ctrl-C to stop</tspan></text>
+</svg>
