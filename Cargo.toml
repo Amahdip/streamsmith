@@ -1,6 +1,6 @@
 [package]
 name = "streamsmith"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.74"
 description = "Turn any video into a ready-to-serve HLS adaptive-bitrate stream — with a built-in preview player — in one command."
@@ -32,4 +32,5 @@ opt-level = "z"      # optimize for size (the hot work is inside ffmpeg, not us)
 lto = true
 codegen-units = 1
 strip = true
-panic = "abort"
+# Note: unwinding (not abort) so a panic in one encode worker doesn't SIGABRT
+# the whole run — the scoped pool surfaces it instead.

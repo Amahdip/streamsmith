@@ -87,10 +87,14 @@ fn main() -> ExitCode {
 fn run(cli: Cli) -> Result<()> {
     ui::banner();
 
+    // Guard a local path that begins with `-` from being parsed as an
+    // ffmpeg/ffprobe option (URLs, containing "://", are left untouched).
+    let input = normalize_input(&cli.input);
+
     // 1. Probe the source.
-    let info = probe::probe(&cli.ffprobe, &cli.input)?;
+    let info = probe::probe(&cli.ffprobe, &input)?;
     if !info.has_video() {
-        bail!("{} has no video stream to package", cli.input);
+        bail!("{input} has no video stream to package");
     }
     ui::step_probe(&info);
 
@@ -114,7 +118,7 @@ fn run(cli: Cli) -> Result<()> {
 
     let opts = PackageOptions {
         ffmpeg_bin: &cli.ffmpeg,
-        input: &cli.input,
+        input: &input,
         out_dir: &cli.out,
         segment_secs: cli.segment,
         preset: &cli.preset,
@@ -129,4 +133,26 @@ fn run(cli: Cli) -> Result<()> {
         return Ok(());
     }
     serve::run(&cli.out, cli.port, !cli.no_open)
+}
+
+/// Prefix `./` to a local path that begins with `-`, so ffmpeg/ffprobe don't
+/// mistake the filename for an option. URLs (with a `://` scheme) pass through.
+fn normalize_input(input: &str) -> String {
+    if input.starts_with('-') && !input.contains("://") {
+        format!("./{input}")
+    } else {
+        input.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_input;
+
+    #[test]
+    fn dash_prefixed_local_path_is_escaped() {
+        assert_eq!(normalize_input("-weird.mp4"), "./-weird.mp4");
+        assert_eq!(normalize_input("normal.mp4"), "normal.mp4");
+        assert_eq!(normalize_input("https://x/-a.mp4"), "https://x/-a.mp4");
+    }
 }

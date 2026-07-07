@@ -144,6 +144,11 @@ impl Encoder {
 
 /// Resolve the requested acceleration against what this ffmpeg build offers.
 pub fn resolve(ffmpeg_bin: &str, requested: HwAccel) -> Result<Encoder> {
+    // The default (software) needs no encoder probe — skip the subprocess.
+    if requested == HwAccel::Off {
+        return Ok(Encoder::x264());
+    }
+
     let available = list_encoders(ffmpeg_bin)?;
     let has = |name: &str| available.contains(name);
 
@@ -161,6 +166,7 @@ pub fn resolve(ffmpeg_bin: &str, requested: HwAccel) -> Result<Encoder> {
     };
 
     match requested {
+        // Handled above; kept exhaustive for the compiler.
         HwAccel::Off => Ok(Encoder::x264()),
         HwAccel::VideoToolbox => require("h264_videotoolbox", Encoder::videotoolbox()),
         HwAccel::Nvenc => require("h264_nvenc", Encoder::nvenc()),
@@ -185,6 +191,13 @@ fn list_encoders(ffmpeg_bin: &str) -> Result<HashSet<String>> {
         .with_context(|| {
             format!("could not run `{ffmpeg_bin}` — is FFmpeg installed and on your PATH?")
         })?;
+
+    // A broken ffmpeg that exits non-zero would otherwise yield an empty set
+    // and get misreported as "encoder not available".
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!("`{ffmpeg_bin} -encoders` failed: {}", stderr.trim());
+    }
 
     // The listing looks like: ` V....D h264_videotoolbox   VideoToolbox H.264 ...`
     // The encoder name is the second whitespace-separated token per line.

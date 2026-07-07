@@ -49,7 +49,13 @@ pub fn hls(
 
     // A GOP aligned to the segment length gives every segment a leading
     // keyframe, so players can switch renditions cleanly at segment boundaries.
-    let fps = if info.fps > 0.0 { info.fps } else { 30.0 };
+    // Clamp to a sane range so a malformed `r_frame_rate` (e.g. "90000/1")
+    // can't blow the GOP up to hundreds of thousands of frames.
+    let fps = if info.fps > 0.0 {
+        info.fps.clamp(1.0, 240.0)
+    } else {
+        30.0
+    };
     let gop = (fps * opts.segment_secs as f64).round().max(1.0) as u32;
 
     // Work-stealing pool: `jobs` threads pull the next rendition index until the
@@ -68,20 +74,22 @@ pub fn hls(
                 };
 
                 {
-                    let _guard = stdout.lock().unwrap();
+                    // Tolerate a poisoned lock (another worker panicked) rather
+                    // than cascading one fault into more panics.
+                    let _guard = stdout.lock().unwrap_or_else(|e| e.into_inner());
                     ui::encode_start(rendition);
                 }
 
                 let started = Instant::now();
                 match encode_rendition(opts, info, rendition, gop) {
                     Ok(()) => {
-                        let _guard = stdout.lock().unwrap();
+                        let _guard = stdout.lock().unwrap_or_else(|e| e.into_inner());
                         ui::encode_done(rendition, started.elapsed());
                     }
                     Err(e) => {
                         failures
                             .lock()
-                            .unwrap()
+                            .unwrap_or_else(|e| e.into_inner())
                             .push(format!("{}: {e:#}", rendition.name));
                     }
                 }
@@ -89,7 +97,7 @@ pub fn hls(
         }
     });
 
-    let failures = failures.into_inner().unwrap();
+    let failures = failures.into_inner().unwrap_or_else(|e| e.into_inner());
     if !failures.is_empty() {
         bail!("encoding failed:\n  - {}", failures.join("\n  - "));
     }
