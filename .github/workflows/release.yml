@@ -1,7 +1,9 @@
 name: Release
 
 # Cut a release by pushing a tag, e.g. `git tag v0.1.0 && git push --tags`.
-# Builds a static-ish binary per platform and attaches it to the GitHub Release.
+# Job 1 creates the GitHub Release for the tag; job 2 builds a binary per
+# platform and attaches it. (upload-rust-binary-action does NOT create the
+# release itself — it requires the release to exist first.)
 on:
   push:
     tags: ["v*"]
@@ -10,8 +12,17 @@ permissions:
   contents: write
 
 jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/create-gh-release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   upload:
     name: ${{ matrix.target }}
+    needs: create-release
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -28,5 +39,4 @@ jobs:
         with:
           bin: streamsmith
           target: ${{ matrix.target }}
-          # Attaches the archive to the Release and (for the first tag) creates it.
           token: ${{ secrets.GITHUB_TOKEN }}
