@@ -4,7 +4,7 @@ Not committed marketing — this file is a scratchpad for launch day. Delete it
 before publishing if you'd rather not ship it in the repo.
 
 **Before you post anything:**
-1. Replace every `yourname` in `Cargo.toml`, `README.md`, and the workflows.
+1. ~~Replace every `yourname`~~ — done (set to `Amahdip`). Add a name/email to `authors` in Cargo.toml if you want.
 2. `cargo publish` so `cargo install streamsmith` actually works.
 3. Record the GIF: `vhs demo.tape` → `docs/demo.gif`, then point the README hero at it.
 4. Take one screenshot of the browser preview player and add it to the README too.

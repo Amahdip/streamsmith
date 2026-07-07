@@ -6,7 +6,7 @@ new features on the [roadmap](README.md#roadmap).
 ## Getting started
 
 ```bash
-git clone https://github.com/yourname/streamsmith
+git clone https://github.com/Amahdip/streamsmith
 cd streamsmith
 cargo build
 cargo test

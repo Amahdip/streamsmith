@@ -5,7 +5,7 @@
 **Turn any video into a ready-to-serve HLS adaptive-bitrate stream — with a built-in preview player — in one command.**
 
 [![Crates.io](https://img.shields.io/crates/v/streamsmith.svg)](https://crates.io/crates/streamsmith)
-[![CI](https://github.com/yourname/streamsmith/actions/workflows/ci.yml/badge.svg)](https://github.com/yourname/streamsmith/actions/workflows/ci.yml)
+[![CI](https://github.com/Amahdip/streamsmith/actions/workflows/ci.yml/badge.svg)](https://github.com/Amahdip/streamsmith/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](#license)
 
 <!--
@@ -85,7 +85,7 @@ can actually watch.
 cargo install streamsmith
 
 # Or grab a prebuilt binary from the Releases page:
-#   https://github.com/yourname/streamsmith/releases
+#   https://github.com/Amahdip/streamsmith/releases
 ```
 
 **Requirement:** [FFmpeg](https://ffmpeg.org/download.html) (`ffmpeg` and
