@@ -4,6 +4,7 @@
 //! Pipeline: probe the source (ffprobe) → plan an ABR ladder → encode each
 //! rendition (ffmpeg) into HLS → write the master playlist → serve a preview.
 
+mod encoder;
 mod ladder;
 mod media;
 mod package;
@@ -17,6 +18,7 @@ use std::thread::available_parallelism;
 use anyhow::{bail, Result};
 use clap::Parser;
 
+use encoder::HwAccel;
 use package::{PackageOptions, MASTER_PLAYLIST};
 
 /// One command → a web-ready adaptive stream.
@@ -35,8 +37,16 @@ struct Cli {
     segment: u32,
 
     /// x264 preset (ultrafast … placebo): faster encodes trade off file size.
+    /// Only applies to software (libx264) encoding.
     #[arg(long, default_value = "veryfast")]
     preset: String,
+
+    /// Hardware acceleration: off (default), auto, videotoolbox, nvenc, or qsv.
+    /// Software libx264 is the default for the best quality-per-bitrate. Use
+    /// `auto` to offload encoding to the GPU/media engine — this frees the CPU
+    /// and helps most on CPU-constrained machines, not necessarily raw speed.
+    #[arg(long, default_value = "off")]
+    hwaccel: String,
 
     /// Max parallel encodes. Defaults to the CPU count.
     #[arg(short, long)]
@@ -88,6 +98,10 @@ fn run(cli: Cli) -> Result<()> {
     let ladder = ladder::plan(&info);
     ui::step_ladder(&ladder);
 
+    // 2b. Resolve the video encoder against what this ffmpeg build offers.
+    let encoder = encoder::resolve(&cli.ffmpeg, HwAccel::parse(&cli.hwaccel)?)?;
+    ui::step_encoder(&encoder);
+
     // 3. Encode + package into HLS.
     let jobs = cli
         .jobs
@@ -104,6 +118,7 @@ fn run(cli: Cli) -> Result<()> {
         out_dir: &cli.out,
         segment_secs: cli.segment,
         preset: &cli.preset,
+        encoder: &encoder,
         threads_per_job,
     };
     package::hls(&opts, &info, &ladder, jobs)?;

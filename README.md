@@ -102,6 +102,10 @@ streamsmith talk.mp4 --out ./dist --no-serve
 
 # Tune it.
 streamsmith talk.mp4 --segment 4 --preset slow --jobs 4 --port 9000
+
+# Offload encoding to the GPU / media engine (Apple VideoToolbox, NVIDIA
+# NVENC, Intel QuickSync). `auto` picks whatever your ffmpeg build has.
+streamsmith talk.mp4 --hwaccel auto
 ```
 
 <details>
@@ -117,6 +121,7 @@ Options:
   -o, --out <OUT>      Output directory for the bundle          [default: stream]
       --segment <N>    HLS segment length, in seconds           [default: 6]
       --preset <P>     x264 preset (ultrafast … placebo)        [default: veryfast]
+      --hwaccel <H>    off | auto | videotoolbox | nvenc | qsv  [default: off]
   -j, --jobs <N>       Max parallel encodes                     [default: CPU count]
       --no-serve       Package only; don't start the preview
       --port <PORT>    Preview server port                      [default: 8080]
@@ -133,6 +138,16 @@ The output directory is a complete, static HLS bundle — drop it behind any web
 server (nginx, S3 + CloudFront, GitHub Pages, Caddy) and it just streams. Point
 your `<video>` at `master.m3u8` via [hls.js](https://github.com/video-dev/hls.js)
 (or natively in Safari).
+
+### Hardware encoding
+
+`--hwaccel auto` offloads encoding to your GPU / media engine, auto-detecting
+VideoToolbox (Apple), NVENC (NVIDIA), or QuickSync (Intel). The default stays
+`libx264` on purpose: on a capable multi-core machine it gives the best
+quality-per-bitrate and is often just as fast. Reach for `--hwaccel` when the
+**CPU is the constraint** (a NAS, a small VPS, an SBC) or you want to keep the
+CPU free and the machine cool — not as a guaranteed speedup. Measure on your
+own hardware and content.
 
 ## How it works
 
@@ -161,8 +176,8 @@ your `<video>` at `master.m3u8` via [hls.js](https://github.com/video-dev/hls.js
 
 ## Roadmap
 
+- [x] Hardware-accelerated encoders (VideoToolbox / NVENC / QSV) via `--hwaccel`
 - [ ] MPEG-DASH output alongside HLS (`--dash`)
-- [ ] Hardware-accelerated encoders (NVENC / QSV / VideoToolbox) via `--hwaccel`
 - [ ] Poster/thumbnail + sprite-sheet (`WEBVTT`) generation
 - [ ] `fMP4`/CMAF segments (shared HLS + DASH media)
 - [ ] Watch-a-folder / batch mode

@@ -73,6 +73,16 @@ pub fn step_ladder(ladder: &[Rendition]) {
     );
 }
 
+/// Report the resolved video encoder.
+pub fn step_encoder(encoder: &crate::encoder::Encoder) {
+    println!(
+        "{} {}  {}",
+        green("✓"),
+        bold("encoder"),
+        cyan(encoder.label)
+    );
+}
+
 /// A rendition has started encoding.
 pub fn encode_start(r: &Rendition) {
     println!("{} {} {}", dim("→"), dim("encoding"), dim(&r.name));

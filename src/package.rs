@@ -15,6 +15,7 @@ use std::time::Instant;
 
 use anyhow::{anyhow, bail, Context, Result};
 
+use crate::encoder::Encoder;
 use crate::ladder::Rendition;
 use crate::media::MediaInfo;
 use crate::ui;
@@ -29,6 +30,8 @@ pub struct PackageOptions<'a> {
     pub out_dir: &'a str,
     pub segment_secs: u32,
     pub preset: &'a str,
+    /// The resolved video encoder (software or hardware).
+    pub encoder: &'a Encoder,
     /// Threads handed to each ffmpeg process (total ≈ jobs × this ≈ cores).
     pub threads_per_job: u32,
 }
@@ -110,22 +113,10 @@ fn encode_rendition(
     cmd.arg("-y")
         .args(["-i", opts.input])
         .args(["-threads", &opts.threads_per_job.to_string()])
-        // --- video ---
-        .args([
-            "-c:v",
-            "libx264",
-            "-preset",
-            opts.preset,
-            "-pix_fmt",
-            "yuv420p",
-        ])
+        // --- video: scaling filter, then the resolved encoder's own args
+        // (software vs hardware differ in rate-control and keyframe flags) ---
         .args(["-vf", &format!("scale=-2:{}", r.height)])
-        .args(["-b:v", &format!("{}k", r.v_kbps)])
-        .args(["-maxrate", &format!("{}k", r.maxrate_kbps)])
-        .args(["-bufsize", &format!("{}k", r.bufsize_kbps)])
-        // Fixed GOP, no scene-cut keyframes → segment-aligned keyframes.
-        .args(["-g", &gop.to_string(), "-keyint_min", &gop.to_string()])
-        .args(["-sc_threshold", "0"]);
+        .args(opts.encoder.video_args(r, gop, opts.preset));
 
     // --- audio (or explicitly none) ---
     if info.has_audio {
